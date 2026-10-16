@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TypeRush — Typing Speed Test</title>
+<style>
+  :root {
+    --bg: #101218; --panel: #181b25; --panel2: #202431; --text: #e9eaf2;
+    --muted: #8e94a8; --accent: #e7b85b; --good: #7ed6a5; --bad: #ff7185;
+    --line: #2b3040; --shadow: 0 18px 55px #0005;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    background: radial-gradient(ellipse at 15% 0%, #29243a 0, transparent 38%),
+                radial-gradient(ellipse at 90% 10%, #222c36 0, transparent 32%), var(--bg);
+    font: 16px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+  }
+  button, select { font: inherit; }
+  button { cursor: pointer; }
+  .wrap { width: min(1050px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 44px; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; }
+  .brand { display:flex; align-items:center; gap:11px; font-weight:850; font-size:1.25rem; letter-spacing:-.04em; }
+  .logo { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; color:#171717; background:var(--accent); box-shadow:0 5px 20px #e7b85b30; }
+  .brand span small { display:block; color:var(--muted); font-size:.68rem; font-weight:600; letter-spacing:.09em; text-transform:uppercase; }
+  .local-pill { color:var(--good); border:1px solid #7ed6a533; background:#7ed6a510; border-radius:99px; padding:7px 11px; font-size:.78rem; }
+  h1 { font-size:clamp(2rem, 5vw, 3.2rem); line-height:1.05; letter-spacing:-.065em; margin:0 0 12px; }
+  .subtitle { color:var(--muted); margin:0; }
+  .hero { margin: 0 0 25px; animation: rise .6s both; }
+  .hero em { color:var(--accent); font-style:normal; }
+  .panel { background:linear-gradient(145deg, #1b1e29f5, #171923f5); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow); }
+  .test-panel { padding:22px; animation: rise .7s .06s both; }
+  .toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding-bottom:18px; border-bottom:1px solid var(--line); }
+  .modes, .tools { display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+  .mode, .ghost, select {
+    color:var(--muted); background:var(--panel2); border:1px solid transparent; border-radius:10px;
+    padding:8px 12px; transition: .2s ease;
+  }
+  .mode:hover, .ghost:hover { color:var(--text); transform:translateY(-1px); }
+  .mode.active { color:var(--accent); border-color:#e7b85b50; background:#e7b85b12; }
+  select { outline:none; color:var(--text); }
+  .timer-row { display:flex; justify-content:space-between; align-items:end; gap:15px; padding:20px 2px 13px; }
+  .timer-label { color:var(--muted); font-size:.76rem; text-transform:uppercase; letter-spacing:.12em; }
+  .timer { font-size:2.2rem; font-weight:800; line-height:1.1; font-variant-numeric:tabular-nums; letter-spacing:-.06em; }
+  .timer.urgent { color:var(--bad); }
+  .live-stats { display:flex; gap:22px; }
+  .live-stat strong { display:block; font-size:1.1rem; font-variant-numeric:tabular-nums; }
+  .live-stat span { color:var(--muted); font-size:.75rem; }
+  .progress { height:4px; background:#2b3040; border-radius:9px; overflow:hidden; margin-bottom:22px; }
+  .progress > div { height:100%; width:0%; background:linear-gradient(90deg,var(--accent),#f3d991); border-radius:9px; transition:width .15s linear; }
+  .typing-area { position:relative; min-height:165px; padding:20px 18px; border:1px solid #303647; border-radius:15px; background:#11141c; cursor:text; transition:border-color .2s, box-shadow .2s; }
+  .typing-area:focus-within, .typing-area.running { border-color:#e7b85b70; box-shadow:0 0 0 3px #e7b85b0c; }
+  .words { font: 1.15rem/2.05 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color:#70788e; overflow-wrap:anywhere; user-select:none; }
+  .char { position:relative; transition:color .08s; border-radius:3px; }
+  .char.correct { color:var(--good); }
+  .char.incorrect { color:var(--bad); background:#ff71851b; text-decoration:underline; text-decoration-color:#ff7185a0; }
+  .char.current { color:var(--text); }
+  .char.current::before { content:""; position:absolute; left:-2px; top:3px; bottom:2px; width:2px; border-radius:2px; background:var(--accent); animation: blink 1s steps(2,start) infinite; }
+  .input-overlay { position:absolute; inset:0; opacity:0; width:100%; height:100%; resize:none; border:0; outline:0; cursor:text; }
+  .test-hint { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; color:var(--muted); font-size:.8rem; padding:13px 2px 0; }
+  kbd { font: .75rem ui-monospace,monospace; border:1px solid #414759; border-radius:5px; padding:2px 5px; color:#c1c6d4; background:#242836; }
+  .bottom-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:18px; margin-top:18px; }
+  .stats-panel, .history-panel { padding:21px; animation: rise .7s .12s both; }
+  .section-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:18px; }
+  h2 { font-size:1.02rem; margin:0; letter-spacing:-.025em; }
+  .section-note { color:var(--muted); font-size:.78rem; }
+  .big-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .stat-card { padding:15px 13px; border-radius:14px; background:var(--panel2); border:1px solid #ffffff06; transition:transform .2s; }
+  .stat-card:hover { transform:translateY(-3px); }
+  .stat-card .value { font-size:1.65rem; font-weight:800; letter-spacing:-.06em; font-variant-numeric:tabular-nums; }
+  .stat-card .label { color:var(--muted); font-size:.75rem; }
+  .result-banner { display:none; margin-top:15px; padding:13px 15px; border-radius:13px; background:#7ed6a510; border:1px solid #7ed6a533; color:var(--good); animation:pop .3s ease; }
+  .result-banner.show { display:block; }
+  .history-list { display:grid; gap:9px; }
+  .history-item { display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:12px; padding:11px 12px; border-radius:12px; background:var(--panel2); animation:pop .25s ease both; }
+  .history-item strong { display:block; font-size:.95rem; }
+  .history-item small { color:var(--muted); font-size:.72rem; }
+  .history-wpm { color:var(--accent); font-weight:800; font-variant-numeric:tabular-nums; }
+  .history-acc { color:var(--good); font-size:.85rem; }
+  .empty { color:var(--muted); font-size:.85rem; padding:20px 8px; text-align:center; border:1px dashed #34394a; border-radius:12px; }
+  .history-actions { display:flex; gap:8px; }
+  .tiny { padding:6px 9px; font-size:.75rem; }
+  footer { text-align:center; color:#777e92; font-size:.78rem; margin-top:24px; }
+  .toast { position:fixed; bottom:22px; left:50%; transform:translate(-50%,20px); opacity:0; pointer-events:none; background:#282d3b; border:1px solid #42495c; color:var(--text); border-radius:12px; padding:10px 15px; box-shadow:var(--shadow); transition:.25s; z-index:5; }
+  .toast.show { opacity:1; transform:translate(-50%,0); }
+  @keyframes blink { to { opacity:0; } }
+  @keyframes rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pop { from { opacity:0; transform:scale(.98); } to { opacity:1; transform:scale(1); } }
+  @media(max-width:720px) { .bottom-grid { grid-template-columns:1fr; } .test-panel { padding:14px; } .typing-area { padding:14px; } .words { font-size:1rem; } .live-stats { gap:12px; } .big-stats { gap:7px; } .stat-card { padding:12px 9px; } .stat-card .value { font-size:1.35rem; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="logo">⌁</div><span>TypeRush<small>typing speed lab</small></span></div>
+    <div class="local-pill">● Auto-saves on this device</div>
+  </header>
+  <section class="hero">
+    <h1>Find your <em>flow.</em></h1>
+    <p class="subtitle">A clean, smooth typing test. Warm up, chase your best WPM, and watch your progress.</p>
+  </section>
+
+  <main class="panel test-panel">
+    <div class="toolbar">
+      <div class="modes" aria-label="Test duration">
+        <button class="mode active" data-time="15">15 sec</button>
+        <button class="mode" data-time="30">30 sec</button>
+        <button class="mode" data-time="60">60 sec</button>
+      </div>
+      <div class="tools">
+        <select id="difficulty" aria-label="Text difficulty">
+          <option value="easy">Easy words</option>
+          <option value="normal" selected>Mixed words</option>
+          <option value="hard">Punctuation</option>
+        </select>
+        <button class="ghost" id="restart" title="Restart test (Tab + Enter)">↻ Restart</button>
+      </div>
+    </div>
+
+    <div class="timer-row">
+      <div><div class="timer-label">Time left</div><div class="timer" id="timer">15.0</div></div>
+      <div class="live-stats">
+        <div class="live-stat"><strong id="liveWpm">0</strong><span>WPM</span></div>
+        <div class="live-stat"><strong id="liveAccuracy">100%</strong><span>Accuracy</span></div>
+        <div class="live-stat"><strong id="liveChars">0</strong><span>Characters</span></div>
+      </div>
+    </div>
+    <div class="progress"><div id="progressBar"></div></div>
+
+    <div class="typing-area" id="typingArea" tabindex="0" aria-label="Typing test area. Click and start typing.">
+      <div class="words" id="words"></div>
+      <textarea class="input-overlay" id="typingInput" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Type the displayed text here"></textarea>
+    </div>
+    <div class="test-hint"><span id="hintText">Click the text box and start typing to begin.</span><span><kbd>Tab</kbd> + <kbd>Enter</kbd> restart · <kbd>Esc</kbd> reset</span></div>
+    <div class="result-banner" id="resultBanner"></div>
+  </main>
+
+  <div class="bottom-grid">
+    <section class="panel stats-panel">
+      <div class="section-heading"><h2>Your stats</h2><span class="section-note">Saved locally</span></div>
+      <div class="big-stats">
+        <div class="stat-card"><div class="value" id="bestWpm">—</div><div class="label">Personal best WPM</div></div>
+        <div class="stat-card"><div class="value" id="avgWpm">—</div><div class="label">Average WPM</div></div>
+        <div class="stat-card"><div class="value" id="testsDone">0</div><div class="label">Tests completed</div></div>
+      </div>
+      <p class="section-note" style="margin:16px 2px 0">Tip: accuracy first, speed second. Your best score updates after each finished test.</p>
+    </section>
+    <section class="panel history-panel">
+      <div class="section-heading"><h2>Recent runs</h2><div class="history-actions"><button class="ghost tiny" id="exportBtn">Export</button><button class="ghost tiny" id="clearBtn">Clear</button></div></div>
+      <div class="history-list" id="historyList"></div>
+    </section>
+  </div>
+  <footer>TypeRush · Runs in your browser · No account needed · Your results stay on this device</footer>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const easyWords = "the quick brown fox jumps over the lazy dog every day brings a new chance to learn and grow practice makes progress keep your focus and enjoy the rhythm of typing words can be simple when you take your time small steps lead to big results".split(" ");
+  const normalWords = "bright windows open quietly while curious minds discover useful ideas and build steady habits the morning breeze moves through trees as people begin another day focused practice creates confidence and every little improvement adds up over time".split(" ");
+  const hardWords = "Typing well isn't about rushing; it's about staying calm, accurate, and consistent. Small wins build skill—one keystroke at a time! Don't stop when a word looks tricky: breathe, focus, and keep going.".split(" ");
+  const KEY = "typerush_results_v1";
+  let duration = 15, startedAt = null, timerId = null, finished = false, target = "", lastSaved = false;
+  let typed = "";
+  const input = $("typingInput");
+
+  function getHistory() { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } }
+  function saveHistory(list) { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch { toast("Browser storage is full; export your scores to keep them."); } }
+  function toast(message) {
+    const el = $("toast"); el.textContent = message; el.classList.add("show");
+    clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove("show"), 2200);
+  }
+  function makeText() {
+    const mode = $("difficulty").value;
+    const source = mode === "easy" ? easyWords : mode === "hard" ? hardWords : normalWords;
+    const arr = [];
+    while (arr.length < 95) arr.push(source[Math.floor(Math.random() * source.length)]);
+    return arr.join(" ");
+  }
+  function renderText() {
+    const typedNow = input.value;
+    let html = "";
+    for (let i = 0; i < target.length; i++) {
+      let cls = "char";
+      if (i < typedNow.length) cls += typedNow[i] === target[i] ? " correct" : " incorrect";
+      else if (i === typedNow.length && !finished) cls += " current";
+      const ch = target[i] === " " ? "&nbsp;" : escapeHtml(target[i]);
+      html += `<span class="${cls}">${ch}</span>`;
+    }
+    $("words").innerHTML = html;
+    // Keep the current cursor area in view on smaller screens.
+    const current = $("words").querySelector(".current");
+    if (current) {
+      const parent = $("typingArea").getBoundingClientRect();
+      const rect = current.getBoundingClientRect();
+      if (rect.bottom > parent.bottom - 20 || rect.top < parent.top + 12) current.scrollIntoView({block:"nearest", behavior:"smooth"});
+    }
+  }
+  function escapeHtml(s) { return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
+  function counts() {
+    const n = input.value.length;
+    let correct = 0;
+    for (let i = 0; i < Math.min(n, target.length); i++) if (input.value[i] === target[i]) correct++;
+    const accuracy = n ? Math.round(correct / n * 100) : 100;
+    const elapsed = startedAt ? Math.max((Date.now() - startedAt) / 60000, 1/60000) : 0;
+    const wpm = elapsed ? Math.round((correct / 5) / elapsed) : 0;
+    return {n, correct, accuracy, wpm};
+  }
+  function updateStats() {
+    const c = counts();
+    $("liveWpm").textContent = c.wpm;
+    $("liveAccuracy").textContent = c.accuracy + "%";
+    $("liveChars").textContent = c.n;
+  }
+  function tick() {
+    if (!startedAt || finished) return;
+    const remaining = Math.max(0, duration - (Date.now() - startedAt) / 1000);
+    $("timer").textContent = remaining.toFixed(1);
+    $("timer").classList.toggle("urgent", remaining <= 5);
+    $("progressBar").style.width = ((duration - remaining) / duration * 100) + "%";
+    updateStats();
+    if (remaining <= 0) finishTest();
+  }
+  function startIfNeeded() {
+    if (startedAt || finished) return;
+    startedAt = Date.now();
+    $("typingArea").classList.add("running");
+    $("hintText").textContent = "You're in the zone — keep going!";
+    timerId = setInterval(tick, 70);
+  }
+  function finishTest() {
+    if (finished) return;
+    finished = true; clearInterval(timerId); timerId = null;
+    const c = counts();
+    $("timer").textContent = "0.0";
+    $("timer").classList.remove("urgent");
+    $("progressBar").style.width = "100%";
+    $("typingArea").classList.remove("running");
+    input.blur();
+    const history = getHistory();
+    const result = { wpm:c.wpm, accuracy:c.accuracy, chars:c.n, correct:c.correct, duration, difficulty:$("difficulty").value, date:new Date().toISOString() };
+    history.unshift(result); saveHistory(history.slice(0, 50));
+    lastSaved = true;
+    $("resultBanner").innerHTML = `<strong>Test complete!</strong> You typed at <strong>${c.wpm} WPM</strong> with <strong>${c.accuracy}% accuracy</strong>. Your result has been saved on this device.`;
+    $("resultBanner").classList.add("show");
+    $("hintText").textContent = "Nice run! Restart to try beating your score.";
+    renderText(); renderHistory(); renderOverview();
+  }
+  function resetTest(focus = true) {
+    clearInterval(timerId); timerId = null; startedAt = null; finished = false; lastSaved = false;
+    target = makeText(); input.value = "";
+    $("timer").textContent = duration.toFixed(1); $("timer").classList.remove("urgent");
+    $("progressBar").style.width = "0%"; $("liveWpm").textContent = "0"; $("liveAccuracy").textContent = "100%"; $("liveChars").textContent = "0";
+    $("typingArea").classList.remove("running");
+    $("resultBanner").classList.remove("show");
+    $("hintText").textContent = "Click the text box and start typing to begin.";
+    renderText();
+    if (focus) { input.focus({preventScroll:true}); }
+  }
+  function renderOverview() {
+    const h = getHistory();
+    $("bestWpm").textContent = h.length ? Math.max(...h.map(x => x.wpm)) : "—";
+    $("avgWpm").textContent = h.length ? Math.round(h.reduce((s,x) => s + x.wpm, 0) / h.length) : "—";
+    $("testsDone").textContent = h.length;
+  }
+  function renderHistory() {
+    const h = getHistory().slice(0, 5), list = $("historyList");
+    if (!h.length) { list.innerHTML = '<div class="empty">No runs yet. Your first score will appear here.</div>'; return; }
+    list.innerHTML = h.map((x,i) => {
+      const date = new Date(x.date);
+      const dateText = date.toLocaleDateString(undefined,{month:"short",day:"numeric"}) + " · " + date.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+      return `<div class="history-item" style="animation-delay:${i*35}ms"><div><strong>${x.duration}s test</strong><small>${dateText} · ${x.difficulty}</small></div><div class="history-wpm">${x.wpm} WPM</div><div class="history-acc">${x.accuracy}%</div></div>`;
+    }).join("");
+  }
+  input.addEventListener("input", () => {
+    if (finished) return;
+    if (input.value.length > 0) startIfNeeded();
+    // Prevent typing beyond the supplied passage.
+    if (input.value.length > target.length) input.value = input.value.slice(0, target.length);
+    renderText(); updateStats();
+    if (input.value.length >= target.length) finishTest();
+  });
+  $("typingArea").addEventListener("click", () => { if (!finished) input.focus(); });
+  document.querySelectorAll(".mode").forEach(btn => btn.addEventListener("click", () => {
+    duration = Number(btn.dataset.time);
+    document.querySelectorAll(".mode").forEach(b => b.classList.toggle("active", b === btn));
+    resetTest(false);
+  }));
+  $("difficulty").addEventListener("change", () => resetTest(false));
+  $("restart").addEventListener("click", () => resetTest(true));
+  document.addEventListener("keydown", e => {
+    if (e.key === "Tab" && !e.shiftKey) {
+      e.preventDefault();
+      const handler = ev => { if (ev.key === "Enter") { ev.preventDefault(); resetTest(true); } document.removeEventListener("keydown", handler, true); };
+      document.addEventListener("keydown", handler, true);
+      setTimeout(() => document.removeEventListener("keydown", handler, true), 1000);
+    }
+    if (e.key === "Escape") resetTest(false);
+  });
+  $("clearBtn").addEventListener("click", () => {
+    if (!getHistory().length) return toast("There are no saved scores to clear.");
+    if (confirm("Delete all saved TypeRush results from this browser?")) { saveHistory([]); renderHistory(); renderOverview(); $("resultBanner").classList.remove("show"); toast("History cleared."); }
+  });
+  $("exportBtn").addEventListener("click", () => {
+    const h = getHistory();
+    if (!h.length) return toast("Complete a test first, then export your scores.");
+    const blob = new Blob([JSON.stringify(h, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = "typerush-results.json"; a.click(); URL.revokeObjectURL(url);
+    toast("Results exported.");
+  });
+  resetTest(false); renderHistory(); renderOverview();
+})();
+</script>
+</body>
+</html>
